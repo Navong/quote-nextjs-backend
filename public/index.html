@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quote App</title>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background-color: #f4f4f9;
+    }
+    .container {
+      max-width: 600px;
+      width: 100%;
+      padding: 20px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+      background: white;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    button:disabled {
+      background-color: #ccc;
+    }
+    h1, p {
+      text-align: center;
+    }
+    input {
+      padding: 10px;
+      width: calc(100% - 22px);
+      margin-top: 10px;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container" id="login-container" style="display: none;">
+  <h1>Login</h1>
+  <input type="text" id="userId" placeholder="Enter your User ID" />
+  <button onclick="login()">Login</button>
+</div>
+
+<div class="container" id="quote-container">
+  <h1 id="quote-text">Welcome!</h1>
+  <p id="quote-author"></p>
+  <button onclick="addToFavorites()" id="favorite-button">Add to Favorites</button>
+  <button onclick="showRandomQuote()">Show Another Quote</button>
+  <button onclick="logout()">Logout</button>
+</div>
+
+<div class="container" id="recommendation-container" style="display: none;">
+  <h1>Recommendations</h1>
+  <p id="recommendation-text"></p>
+</div>
+
+<script>
+  const apiBaseUrl = 'http://localhost:3333/api'; // Replace with your API base URL
+  let currentUserId = localStorage.getItem('currentUserId');
+  let currentQuoteId = null;
+
+  // Function to handle login
+  function login() {
+    const userIdInput = document.getElementById('userId').value.trim();
+    if (userIdInput === '') {
+      alert('Please enter a User ID');
+      return;
+    }
+    currentUserId = userIdInput;
+    localStorage.setItem('currentUserId', currentUserId);
+    document.getElementById('login-container').style.display = 'none';
+    document.getElementById('quote-container').style.display = 'block';
+    showRandomQuote();
+    showRecommendations();
+  }
+
+  // Function to fetch and display a random quote
+  async function showRandomQuote() {
+    try {
+      const response = await axios.get(`${apiBaseUrl}/quotes/random`);
+      const quote = response.data;
+      document.getElementById('quote-text').textContent = quote.content;
+      document.getElementById('quote-author').textContent = `— ${quote.author}`;
+      currentQuoteId = quote.id;
+    } catch (error) {
+      console.error('Error fetching random quote:', error);
+    }
+  }
+
+  // Function to add the current quote to favorites
+  async function addToFavorites() {
+    if (!currentUserId || !currentQuoteId) {
+      alert('Please log in and select a quote first.');
+      return;
+    }
+    try {
+      await axios.post(`${apiBaseUrl}/favorites`, {
+        userId: currentUserId,
+        quoteId: currentQuoteId
+      });
+      alert('Quote added to favorites!');
+    } catch (error) {
+      console.error('Error adding to favorites:', error);
+    }
+  }
+
+  // Function to show recommendations for new users
+  async function showRecommendations() {
+    try {
+      // Check if the user has any favorites
+      const userFavoritesResponse = await axios.get(`${apiBaseUrl}/favorites/${currentUserId}`);
+      const userFavorites = userFavoritesResponse.data;
+
+      if (userFavorites.length > 0) {
+        // If the user has favorites, recommend similar or top-rated ones
+        const recommendations = userFavorites.map((item) => item.quote.content).join(', ');
+        const favoriteList = document.createElement('ul');
+        userFavorites.forEach((item) => {
+          const favoriteListItem = document.createElement('li');
+          favoriteListItem.textContent = item.quote.content;
+          favoriteList.appendChild(favoriteListItem);
+        });
+        document.getElementById('recommendation-text').innerHTML = `Your Favorites:<br/>`;
+        document.getElementById('recommendation-text').appendChild(favoriteList);
+      } else {
+        // If the user is new or has no favorites, show the most popular quotes
+        const popularQuotesResponse = await axios.get(`${apiBaseUrl}/quotes/top`);
+        const popularQuotes = popularQuotesResponse.data;
+
+        if (popularQuotes.length > 0) {
+          const recommendations = popularQuotes.map((quote) => quote.content).join(', ');
+          document.getElementById('recommendation-text').textContent = `Popular Quotes: ${recommendations}`;
+        } else {
+          document.getElementById('recommendation-text').textContent = 'No recommendations available yet.';
+        }
+      }
+
+      document.getElementById('recommendation-container').style.display = 'block';
+    } catch (error) {
+      console.error('Error fetching recommendations:', error);
+    }
+  }
+
+  // Function to logout and clear login state
+  function logout() {
+    localStorage.removeItem('currentUserId');
+    currentUserId = null;
+    document.getElementById('login-container').style.display = 'block';
+    document.getElementById('quote-container').style.display = 'none';
+    document.getElementById('recommendation-container').style.display = 'none';
+  }
+
+  // If user is already logged in, show the quote container
+  if (currentUserId) {
+    document.getElementById('login-container').style.display = 'none';
+    document.getElementById('quote-container').style.display = 'block';
+    showRandomQuote();
+    showRecommendations();
+  }
+</script>
+
+</body>
+</html>
+
