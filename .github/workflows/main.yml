@@ -1,0 +1,59 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main  # Trigger pipeline on push to the main branch
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest  # Use the latest Ubuntu runner
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Step 1: Build Docker image and push to Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # Step 2: Build and push Docker image
+      - name: Build Docker image
+        run: |
+          docker build -t navong/quote-nextjs-backend:latest .
+
+      - name: Push Docker image to Docker Hub
+        run: |
+          docker push navong/quote-nextjs-backend:latest
+
+
+      # Step 3: SSH into Raspberry Pi using username and password
+      - name: Install sshpass
+        run: sudo apt-get update && sudo apt-get install -y sshpass
+
+
+      # Step 4: Clone Git repository on Raspberry Pi
+      - name: Clone Git repository on Raspberry Pi
+        run: |
+          sshpass -p "${{ secrets.RASPBERRY_PI_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.RASPBERRY_PI_USER }}@${{ secrets.RASPBERRY_PI_HOST }} "
+            if [ ! -d '/home/dev/backend/quote-nextjs-backend' ]; then
+              git clone https://github.com/Navong/quote-nextjs-backend.git /home/dev/backend/quote-nextjs-backend;
+            fi
+          "
+
+      - name: Create .env.local on Raspberry Pi
+        run: |
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > .env.local
+          sshpass -p "${{ secrets.RASPBERRY_PI_PASSWORD }}" scp .env.local ${{ secrets.RASPBERRY_PI_USER }}@${{ secrets.RASPBERRY_PI_HOST }}:/home/dev/backend/quote-nextjs-backend
+
+      # Step 5: Pull Docker image and run container on Raspberry Pi
+      - name: Pull Docker image and run container on Raspberry Pi
+        run: |
+          sshpass -p "${{ secrets.RASPBERRY_PI_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.RASPBERRY_PI_USER }}@${{ secrets.RASPBERRY_PI_HOST }} "
+            cd /home/dev/backend/quote-nextjs-backend &&
+            docker pull navong/quote-nextjs-backend:latest &&
+            docker-compose --env-file .env.local up -d
+          "
