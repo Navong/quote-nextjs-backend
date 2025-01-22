@@ -2,15 +2,15 @@ FROM node:20
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY server/package*.json ./
 
 RUN npm i
 
-COPY /prisma ./prisma
+COPY server/prisma ./prisma
 
 RUN npx prisma generate
 
-COPY . .
+COPY server/. .
 
 EXPOSE 4000
 
