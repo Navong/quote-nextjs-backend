@@ -1,4 +1,7 @@
-FROM node:20
+FROM alpine:3.21
+
+# Install Node.js and npm
+RUN apk add --no-cache nodejs npm
 
 WORKDIR /app
 
