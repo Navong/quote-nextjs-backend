@@ -41,6 +41,8 @@ jobs:
           sshpass -p "${{ secrets.RASPBERRY_PI_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.RASPBERRY_PI_USER }}@${{ secrets.RASPBERRY_PI_HOST }} "
             if [ ! -d '/home/dev/backend/quote-nextjs-backend' ]; then
               git clone https://github.com/Navong/quote-nextjs-backend.git /home/dev/backend/quote-nextjs-backend;
+            else
+              cd /home/dev/backend/quote-nextjs-backend && git pull;
             fi
           "
 
