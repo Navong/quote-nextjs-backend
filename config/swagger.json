@@ -1,0 +1,187 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+      "title": "Quotes API",
+      "version": "1.0.0",
+      "description": "API for managing quotes, favorites, and recommendations."
+    },
+    "servers": [
+      {
+        "url": "http://localhost:4000/api"
+      }
+    ],
+    "paths": {
+      "/quotes/random": {
+        "get": {
+          "summary": "Get 100 random quotes",
+          "responses": {
+            "200": {
+              "description": "A list of random quotes.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "array",
+                    "items": { "$ref": "#/components/schemas/Quote" }
+                  }
+                }
+              }
+            },
+            "404": { "description": "No quotes available." },
+            "500": { "description": "Server error." }
+          }
+        }
+      },
+      "/favorites/{userId}": {
+        "get": {
+          "summary": "Get all favorite quotes for a user",
+          "parameters": [
+            {
+              "name": "userId",
+              "in": "path",
+              "required": true,
+              "schema": { "type": "string" }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "A list of favorites.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "array",
+                    "items": { "$ref": "#/components/schemas/Favorite" }
+                  }
+                }
+              }
+            },
+            "400": { "description": "userId is required." },
+            "500": { "description": "Server error." }
+          }
+        },
+        "delete": {
+          "summary": "Remove a quote from favorites",
+          "parameters": [
+            {
+              "name": "userId",
+              "in": "path",
+              "required": true,
+              "schema": { "type": "string" }
+            }
+          ],
+          "requestBody": {
+            "description": "Quote id to remove",
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "quoteId": { "type": "number" }
+                  },
+                  "required": ["quoteId"]
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": { "description": "Favorite removed." },
+            "404": { "description": "Favorite not found." },
+            "400": { "description": "userId and quoteId are required." },
+            "500": { "description": "Server error." }
+          }
+        }
+      },
+      "/favorites": {
+        "post": {
+          "summary": "Add a quote to favorites",
+          "requestBody": {
+            "description": "Favorite data",
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "userId": { "type": "string" },
+                    "quoteId": { "type": "number" },
+                    "translatedContent": { "type": "string" }
+                  },
+                  "required": ["userId", "quoteId"]
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": { "description": "Favorite created." },
+            "400": { "description": "userId and quoteId are required or Favorite already exists." },
+            "500": { "description": "Server error." }
+          }
+        }
+      },
+      "/recommendations/{userId}": {
+        "get": {
+          "summary": "Get recommended quotes for a user",
+          "parameters": [
+            {
+              "name": "userId",
+              "in": "path",
+              "required": true,
+              "schema": { "type": "string" }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "A list of recommended quotes.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "array",
+                    "items": { "$ref": "#/components/schemas/Quote" }
+                  }
+                }
+              }
+            },
+            "400": { "description": "userId is required." },
+            "500": { "description": "Server error." }
+          }
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "Quote": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "number" },
+            "externalId": { "type": "string" },
+            "content": { "type": "string" },
+            "author": { "type": "string" },
+            "authorSlug": { "type": "string" },
+            "length": { "type": "number" },
+            "tags": {
+              "type": "array",
+              "items": { "$ref": "#/components/schemas/Tag" }
+            }
+          }
+        },
+        "Tag": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "number" },
+            "name": { "type": "string" }
+          }
+        },
+        "Favorite": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "number" },
+            "userId": { "type": "string" },
+            "quoteId": { "type": "number" },
+            "translatedContent": { "type": "string" },
+            "quote": { "$ref": "#/components/schemas/Quote" }
+          }
+        }
+      }
+    }
+  }
+  
