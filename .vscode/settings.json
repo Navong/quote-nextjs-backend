@@ -1,0 +1,4 @@
+{
+    "appService.defaultWebAppToDeploy": "undefined/subscriptions/b79ede41-aecb-4f61-9b8c-f099836efb60/resourceGroups/appsvc_linux_centralus/providers/Microsoft.Web/sites/quote-back",
+    "appService.deploySubpath": "."
+}
