@@ -2,15 +2,15 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-COPY server/package*.json ./
+COPY package*.json ./
 
 RUN npm ci
 
-COPY server/prisma ./prisma
+COPY prisma ./prisma
 
 RUN npx prisma generate
 
-COPY server/. .
+COPY . .
 
 EXPOSE 4000
 
