@@ -1,29 +1,15 @@
-version: "3.9"
+version: '3.8'
 
 services:
-  quote-nextjs-backend:
-    container_name: quote-nextjs-backend
-    image: navong/quote-nextjs-backend
-    build:
-      context: .
-      dockerfile: Dockerfile
+  app:
+    build: .
+    container_name: node_app
+    ports:
+      - "4001:4000"
     environment:
       DATABASE_URL: ${DATABASE_URL}
-    labels:
-      - "traefik.http.routers.quote-nextjs-backend.rule=(Host(`quotenextjs.navong.xyz`) && PathPrefix(`/api`))"
-    networks:
-      - traefik-network
-    restart: always
-
-networks:
-  traefik-network:
-    external: true
-
-
-
-
-
-
-
-
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: ["npm", "start"]
 
