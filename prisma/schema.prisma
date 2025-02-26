@@ -3,58 +3,47 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
 }
 
 model Quote {
-  id           String     @id @default(uuid())
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
   content      String
   author       String
   authorSlug   String
   length       Int
-  dateAdded    DateTime   @default(now())
-  dateModified DateTime   @updatedAt
-  externalId   String     @unique
-  favorites    Favorite[]
-  tags         Tag[]      @relation("QuoteTags")
+  dateAdded    DateTime @default(now())
+  dateModified DateTime @updatedAt
+  externalId   String   @unique
+  favorites    String[] // Store Favorite IDs as an array
+  tags         String[] // Store Tag IDs as an array
 
   @@index([dateAdded])
-  @@index([externalId])
-  @@map("quotes")
 }
 
 model Favorite {
-  id                String   @id @default(uuid())
-  userId            String
-  quoteId           String
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String   // Reference to User ID
+  quoteId           String   // Reference to Quote ID
   createdAt         DateTime @default(now())
   translatedContent String?
-  quote             Quote    @relation(fields: [quoteId], references: [id])
-  user              User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, quoteId])
   @@index([userId])
   @@index([quoteId])
-  @@map("favorites")
 }
 
 model User {
-  id        String     @id @default(uuid())
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
   name      String
-  email     String?    @unique
-  favorites Favorite[]
-
-  @@map("users")
+  email     String?  @unique
+  favorites String[] // Store Favorite IDs as an array
 }
 
 model Tag {
-  id       String     @id @default(uuid())
-  name     String     @unique
-  quotes   Quote[]    @relation("QuoteTags")
+  id       String   @id @default(auto()) @map("_id") @db.ObjectId
+  name     String   @unique
+  quotes   String[] // Store Quote IDs as an array
 
-  @@index([name])
-  @@map("tags")
 }
-
